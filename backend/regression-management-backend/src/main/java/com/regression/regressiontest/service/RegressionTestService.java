@@ -7,6 +7,7 @@ import com.regression.regressiontest.dto.RegressionTestVersionDto;
 import com.regression.regressiontest.entity.RegressionTestVersion;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -17,8 +18,9 @@ public class RegressionTestService {
 
     private final RegressionPackVersionRepository packVersionRepository;
 
+    @Transactional(readOnly = true)
     public List<RegressionTestVersionDto> findTestsInVersion(UUID packId, UUID versionId) {
-        RegressionPackVersion version = packVersionRepository.findById(versionId)
+        RegressionPackVersion version = packVersionRepository.findByIdWithDetails(versionId)
                 .filter(v -> v.getRegressionPack().getId().equals(packId))
                 .orElseThrow(() -> new ResourceNotFoundException("Version not found"));
 

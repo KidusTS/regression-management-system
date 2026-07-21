@@ -10,6 +10,7 @@ import com.regression.regressionsession.repository.RegressionExecutionResultRepo
 import com.regression.regressionsession.repository.RegressionSessionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -21,6 +22,7 @@ public class ReportService {
     private final RegressionSessionRepository sessionRepository;
     private final RegressionExecutionResultRepository resultRepository;
 
+    @Transactional(readOnly = true)
     public SessionSummaryDto getSessionSummary(UUID sessionId) {
         RegressionSession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Session not found: " + sessionId));
@@ -47,6 +49,7 @@ public class ReportService {
                 .build();
     }
 
+    @Transactional(readOnly = true)
     public List<TrendReportDto> getPackTrends(UUID packId) {
         return sessionRepository.findAllByOrderByCreatedAtDesc().stream()
                 .filter(s -> s.getPackVersion().getRegressionPack().getId().equals(packId))

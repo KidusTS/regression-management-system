@@ -22,6 +22,7 @@ public class RegressionPackService {
     private final RegressionPackRepository packRepository;
     private final RegressionPackVersionRepository versionRepository;
     private final ExcelImportService excelImportService;
+    private final ExcelExportService excelExportService;
 
     @Transactional(readOnly = true)
     public List<RegressionPackDto> findAll() {
@@ -69,10 +70,18 @@ public class RegressionPackService {
 
     @Transactional(readOnly = true)
     public RegressionPackVersionDto findVersion(UUID packId, UUID versionId) {
-        RegressionPackVersion version = versionRepository.findById(versionId)
+        RegressionPackVersion version = versionRepository.findByIdWithDetails(versionId)
                 .filter(v -> v.getRegressionPack().getId().equals(packId))
                 .orElseThrow(() -> new ResourceNotFoundException("Version not found"));
         return toVersionDto(version);
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] exportExcel(UUID packId, UUID versionId) {
+        RegressionPackVersion version = versionRepository.findByIdWithDetails(versionId)
+                .filter(v -> v.getRegressionPack().getId().equals(packId))
+                .orElseThrow(() -> new ResourceNotFoundException("Version not found"));
+        return excelExportService.exportVersion(version);
     }
 
     @Transactional

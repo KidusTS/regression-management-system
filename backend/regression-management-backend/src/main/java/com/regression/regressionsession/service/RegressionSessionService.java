@@ -28,18 +28,20 @@ public class RegressionSessionService {
     private final RegressionExecutionResultRepository resultRepository;
     private final RegressionPackVersionRepository packVersionRepository;
 
+    @Transactional(readOnly = true)
     public List<RegressionSessionDto> findAll() {
         return sessionRepository.findAllByOrderByCreatedAtDesc()
                 .stream().map(this::toDto).toList();
     }
 
+    @Transactional(readOnly = true)
     public RegressionSessionDto findById(UUID id) {
         return toDto(getSessionOrThrow(id));
     }
 
     @Transactional
     public RegressionSessionDto create(CreateSessionRequest request, User createdBy) {
-        RegressionPackVersion packVersion = packVersionRepository.findById(request.getPackVersionId())
+        RegressionPackVersion packVersion = packVersionRepository.findByIdWithDetails(request.getPackVersionId())
                 .orElseThrow(() -> new ResourceNotFoundException("Pack version not found: " + request.getPackVersionId()));
 
         RegressionSession session = new RegressionSession();
@@ -78,6 +80,7 @@ public class RegressionSessionService {
         return toDto(sessionRepository.save(session));
     }
 
+    @Transactional(readOnly = true)
     public List<ExecutionResultDto> findResults(UUID sessionId) {
         getSessionOrThrow(sessionId);
         return resultRepository.findAllBySessionId(sessionId)
@@ -86,7 +89,7 @@ public class RegressionSessionService {
 
     @Transactional
     public ExecutionResultDto updateResult(UUID sessionId, UUID resultId, UpdateResultRequest request, User user) {
-        RegressionExecutionResult result = resultRepository.findById(resultId)
+        RegressionExecutionResult result = resultRepository.findByIdWithDetails(resultId)
                 .filter(r -> r.getSession().getId().equals(sessionId))
                 .orElseThrow(() -> new ResourceNotFoundException("Result not found"));
 
@@ -102,7 +105,7 @@ public class RegressionSessionService {
     public List<ExecutionResultDto> bulkUpdateResults(UUID sessionId, BulkUpdateResultRequest request, User user) {
         getSessionOrThrow(sessionId);
         return request.getResults().stream().map(entry -> {
-            RegressionExecutionResult result = resultRepository.findById(entry.getResultId())
+            RegressionExecutionResult result = resultRepository.findByIdWithDetails(entry.getResultId())
                     .filter(r -> r.getSession().getId().equals(sessionId))
                     .orElseThrow(() -> new ResourceNotFoundException("Result not found: " + entry.getResultId()));
 
@@ -115,7 +118,7 @@ public class RegressionSessionService {
     }
 
     private RegressionSession getSessionOrThrow(UUID id) {
-        return sessionRepository.findById(id)
+        return sessionRepository.findByIdWithDetails(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Session not found: " + id));
     }
 
@@ -130,7 +133,7 @@ public class RegressionSessionService {
         dto.setSoftwareVersion(s.getSoftwareVersion());
         dto.setEnvironment(s.getEnvironment());
         dto.setStatus(s.getStatus().name());
-        dto.setTotalTests(s.getPackVersion().getTestVersions().size());
+        dto.setTotalTests(packVersionRepository.countTestsByVersionId(s.getPackVersion().getId()));
         dto.setStartedAt(s.getStartedAt());
         dto.setCompletedAt(s.getCompletedAt());
         dto.setCreatedAt(s.getCreatedAt());
