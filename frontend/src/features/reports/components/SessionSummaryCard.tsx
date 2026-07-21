@@ -42,7 +42,7 @@ export function SessionSummaryCard({ summary }: Props) {
                   <Cell key={entry.name} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip formatter={(v: number) => [v, ""]} />
+              <Tooltip formatter={(v) => [Number(v), ""]} />
             </PieChart>
           </ResponsiveContainer>
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">

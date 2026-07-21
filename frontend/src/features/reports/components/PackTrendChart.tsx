@@ -44,7 +44,7 @@ export function PackTrendChart({ trends }: Props) {
             className="text-muted-foreground"
           />
           <Tooltip
-            formatter={(v: number) => [`${v}%`, "Pass rate"]}
+            formatter={(v) => [`${Number(v)}%`, "Pass rate"]}
             contentStyle={{ fontSize: 12 }}
           />
           <Line
