@@ -54,6 +54,7 @@ public class AttachmentService {
         return toDto(attachmentRepository.save(attachment));
     }
 
+    @Transactional(readOnly = true)
     public List<AttachmentDto> findByResult(UUID resultId) {
         return attachmentRepository.findAllByExecutionResultId(resultId)
                 .stream().map(this::toDto).toList();
