@@ -1,11 +1,22 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { packService } from "../services/pack.service";
-import type { CreatePackRequest } from "../types/pack.types";
+import type { CreatePackRequest, ImportResult } from "../types/pack.types";
 
 export function useCreatePack() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: CreatePackRequest) => packService.create(data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["packs"] }),
+  });
+}
+
+export function useCreatePackWithImport() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ data, file }: { data: CreatePackRequest; file: File }): Promise<ImportResult> => {
+      const pack = await packService.create(data);
+      return packService.importExcel(pack.id, file);
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["packs"] }),
   });
 }
