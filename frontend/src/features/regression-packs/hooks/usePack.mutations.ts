@@ -47,3 +47,10 @@ export function useImportPack(packId: string) {
     },
   });
 }
+
+export function useExportVersion(packId: string) {
+  return useMutation({
+    mutationFn: ({ versionId, fileName }: { versionId: string; fileName: string }) =>
+      packService.exportVersion(packId, versionId, fileName),
+  });
+}

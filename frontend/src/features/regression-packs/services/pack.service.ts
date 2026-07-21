@@ -59,4 +59,16 @@ export const packService = {
     });
     return res.data.data;
   },
+
+  exportVersion: async (id: string, versionId: string, fileName: string): Promise<void> => {
+    const res = await api.get(`${base}/${id}/versions/${versionId}/export`, {
+      responseType: "blob",
+    });
+    const url = URL.createObjectURL(new Blob([res.data]));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(url);
+  },
 };

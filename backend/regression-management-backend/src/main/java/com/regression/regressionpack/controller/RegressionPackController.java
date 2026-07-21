@@ -6,6 +6,8 @@ import com.regression.regressionpack.service.RegressionPackService;
 import com.regression.user.entity.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -60,6 +62,16 @@ public class RegressionPackController {
     public ResponseEntity<ApiResponse<RegressionPackVersionDto>> getVersion(
             @PathVariable UUID id, @PathVariable UUID versionId) {
         return ResponseEntity.ok(ApiResponse.ok(packService.findVersion(id, versionId)));
+    }
+
+    @GetMapping("/{id}/versions/{versionId}/export")
+    public ResponseEntity<byte[]> exportExcel(
+            @PathVariable UUID id, @PathVariable UUID versionId) {
+        byte[] bytes = packService.exportExcel(id, versionId);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"regression-pack-v" + versionId + ".xlsx\"")
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(bytes);
     }
 
     @PostMapping("/{id}/import")

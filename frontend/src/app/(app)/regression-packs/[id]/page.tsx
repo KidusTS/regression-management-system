@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { usePackDetail } from "@/features/regression-packs/hooks/usePackDetail";
 import { usePackVersions } from "@/features/regression-packs/hooks/usePackVersions";
 import { usePackVersionTests } from "@/features/regression-packs/hooks/usePackVersionTests";
+import { useExportVersion } from "@/features/regression-packs/hooks/usePack.mutations";
 import { ImportPackModal } from "@/features/regression-packs/components/ImportPackModal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,9 @@ export default function PackDetailPage() {
   const { data: versions, isLoading: versionsLoading } = usePackVersions(id);
   const [selectedVersion, setSelectedVersion] = useState<RegressionPackVersion | null>(null);
   const [importOpen, setImportOpen] = useState(false);
+  const { mutate: exportVersion, isPending: exporting } = useExportVersion(id);
+
+  const nextVersionNumber = (versions?.length ?? 0) + 1;
 
   const { data: tests, isLoading: testsLoading } = usePackVersionTests(
     id,
@@ -49,15 +53,25 @@ export default function PackDetailPage() {
             <p className="text-muted-foreground mt-2 text-sm">{pack.description}</p>
           )}
         </div>
-        <Button onClick={() => setImportOpen(true)}>Import Excel</Button>
+        <div className="flex flex-col items-end gap-1">
+          <Button onClick={() => setImportOpen(true)}>Import New Version</Button>
+          <p className="text-muted-foreground text-xs">
+            Each import creates a new version
+          </p>
+        </div>
       </div>
 
       {/* Versions */}
       <div className="space-y-3">
-        <h2 className="font-medium">Versions</h2>
+        <div>
+          <h2 className="font-medium">Versions</h2>
+          <p className="text-muted-foreground mt-0.5 text-xs">
+            Versions are created by importing an Excel file. Each import snapshots the test cases at that point in time.
+          </p>
+        </div>
         {versionsLoading && <p className="text-muted-foreground text-sm">Loading versions...</p>}
         {versions && versions.length === 0 && (
-          <p className="text-muted-foreground text-sm">No versions yet. Import an Excel file to create the first version.</p>
+          <p className="text-muted-foreground text-sm">No versions yet. Use "Import New Version" to create v1.</p>
         )}
         {versions && versions.length > 0 && (
           <Table>
@@ -85,15 +99,30 @@ export default function PackDetailPage() {
                     {new Date(v.createdAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        setSelectedVersion(selectedVersion?.id === v.id ? null : v)
-                      }
-                    >
-                      {selectedVersion?.id === v.id ? "Hide tests" : "View tests"}
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setSelectedVersion(selectedVersion?.id === v.id ? null : v)
+                        }
+                      >
+                        {selectedVersion?.id === v.id ? "Hide tests" : "View tests"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={exporting}
+                        onClick={() =>
+                          exportVersion({
+                            versionId: v.id,
+                            fileName: `${pack.name}-v${v.versionNumber}.xlsx`,
+                          })
+                        }
+                      >
+                        Export
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -164,6 +193,7 @@ export default function PackDetailPage() {
       <ImportPackModal
         packId={id}
         packName={pack.name}
+        nextVersionNumber={nextVersionNumber}
         open={importOpen}
         onClose={() => setImportOpen(false)}
       />
