@@ -57,7 +57,7 @@ export function CreateSessionModal({ open, onClose }: Props) {
           <div className="space-y-1">
             <label className="text-sm font-medium">Regression Pack</label>
             <select
-              className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm"
+              className="border-input bg-background text-foreground w-full rounded-md border px-3 py-2 text-sm [color-scheme:dark]"
               value={selectedPackId}
               onChange={(e) => {
                 setSelectedPackId(e.target.value);
@@ -76,7 +76,7 @@ export function CreateSessionModal({ open, onClose }: Props) {
           <div className="space-y-1">
             <label className="text-sm font-medium">Pack Version</label>
             <select
-              className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm disabled:opacity-50"
+              className="border-input bg-background text-foreground w-full rounded-md border px-3 py-2 text-sm disabled:opacity-50 [color-scheme:dark]"
               disabled={!selectedPackId || !versions?.length}
               {...register("packVersionId")}
             >

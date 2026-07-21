@@ -37,7 +37,7 @@ export function PacksTable({ packs, onEdit }: Props) {
         {packs.map((pack) => (
           <TableRow key={pack.id}>
             <TableCell>
-              <Link href={`/regression-packs/${pack.id}`} className="font-medium hover:underline">
+              <Link href={`/regression-packs/${pack.id}`} className="font-medium underline-offset-4 hover:underline text-primary">
                 {pack.name}
               </Link>
               {pack.description && (
@@ -53,6 +53,12 @@ export function PacksTable({ packs, onEdit }: Props) {
             </TableCell>
             <TableCell className="text-right">
               <div className="flex justify-end gap-2">
+                <Link
+                  href={`/regression-packs/${pack.id}`}
+                  className="inline-flex h-7 items-center rounded-[min(var(--radius-md),12px)] border border-border bg-background px-2.5 text-[0.8rem] font-medium transition-colors hover:bg-muted"
+                >
+                  View
+                </Link>
                 <Button variant="outline" size="sm" onClick={() => onEdit(pack)}>
                   Edit
                 </Button>
