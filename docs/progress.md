@@ -137,47 +137,47 @@ Last Updated: 2025
 ### Infrastructure
 | Task | Status | Notes |
 |---|---|---|
-| Axios instance with JWT interceptor | ⏳ | |
-| React Query setup | ⏳ | |
-| Auth context + provider | ⏳ | |
+| Axios instance with JWT interceptor | ✅ | |
+| React Query setup | ✅ | |
+| Auth context + provider | ✅ | |
 
 ### Auth Feature
 | Task | Status | Notes |
 |---|---|---|
-| Login page | ⏳ | |
-| Register page | ⏳ | |
-| Protected route wrapper | ⏳ | |
+| Login page | ✅ | |
+| Register page | ✅ | |
+| Protected route wrapper | ✅ | App layout redirects unauthenticated users |
 
 ### Regression Packs Feature
 | Task | Status | Notes |
 |---|---|---|
-| Pack list page | ⏳ | |
-| Pack detail page | ⏳ | |
-| Version list | ⏳ | |
-| Excel import modal | ⏳ | |
-| Import result summary display | ⏳ | |
+| Pack list page | ✅ | |
+| Pack detail page | ✅ | |
+| Version list | ✅ | Inline on detail page |
+| Excel import modal | ✅ | |
+| Import result summary display | ✅ | Shown after successful import |
 
 ### Regression Sessions Feature
 | Task | Status | Notes |
 |---|---|---|
-| Session list page | ⏳ | |
-| Create session form | ⏳ | |
-| Session detail page | ⏳ | |
-| Execution results table | ⏳ | |
-| Bulk result update | ⏳ | |
+| Session list page | ✅ | |
+| Create session form | ✅ | Pack + version selector |
+| Session detail page | ✅ | Status transitions + tallies |
+| Execution results table | ✅ | Inline result + comment editing |
+| Bulk result update | ✅ | Hook wired, available for future use |
 
 ### Reports Feature
 | Task | Status | Notes |
 |---|---|---|
-| Session summary view | ⏳ | |
-| Pack trend chart | ⏳ | |
+| Session summary view | ✅ | Donut chart with pass rate + breakdown |
+| Pack trend chart | ✅ | Line chart of pass rate across sessions |
 
 ### Dashboard
 | Task | Status | Notes |
 |---|---|---|
-| Active sessions widget | ⏳ | |
-| Recent packs widget | ⏳ | |
-| Stats overview | ⏳ | |
+| Active sessions widget | ✅ | |
+| Recent packs widget | ✅ | |
+| Stats overview | ✅ | Total packs, active sessions, completed sessions, overall pass rate |
 
 ---
 
@@ -185,9 +185,9 @@ Last Updated: 2025
 
 | Task | Status | Notes |
 |---|---|---|
-| Backend integration tests | ⏳ | |
-| Excel import edge case tests | ⏳ | |
-| API contract tests | ⏳ | |
+| Backend integration tests | ✅ | Testcontainers PostgreSQL, MockMvc |
+| Excel import edge case tests | ✅ | Missing fields, duplicate IDs, modified, removed |
+| API contract tests | ✅ | Auth, packs, sessions covered |
 
 ---
 
