@@ -23,11 +23,13 @@ public class RegressionPackService {
     private final RegressionPackVersionRepository versionRepository;
     private final ExcelImportService excelImportService;
 
+    @Transactional(readOnly = true)
     public List<RegressionPackDto> findAll() {
         return packRepository.findAllByIsActiveTrueOrderByCreatedAtDesc()
                 .stream().map(this::toDto).toList();
     }
 
+    @Transactional(readOnly = true)
     public RegressionPackDto findById(UUID id) {
         return toDto(getPackOrThrow(id));
     }
@@ -58,12 +60,14 @@ public class RegressionPackService {
         packRepository.save(pack);
     }
 
+    @Transactional(readOnly = true)
     public List<RegressionPackVersionDto> findVersions(UUID packId) {
         getPackOrThrow(packId);
         return versionRepository.findAllByRegressionPackIdOrderByVersionNumberAsc(packId)
                 .stream().map(this::toVersionDto).toList();
     }
 
+    @Transactional(readOnly = true)
     public RegressionPackVersionDto findVersion(UUID packId, UUID versionId) {
         RegressionPackVersion version = versionRepository.findById(versionId)
                 .filter(v -> v.getRegressionPack().getId().equals(packId))
