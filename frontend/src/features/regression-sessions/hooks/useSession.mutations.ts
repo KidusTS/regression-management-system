@@ -18,7 +18,7 @@ export function useUpdateSessionStatus(sessionId: string) {
   });
 }
 
-export function useUpdateResult(sessionId: string) {
+export function useUpdateResult(sessionId: string, onSuccess?: () => void) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ resultId, data }: { resultId: string; data: UpdateResultRequest }) =>
@@ -26,6 +26,7 @@ export function useUpdateResult(sessionId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["sessions", sessionId, "results"] });
       qc.invalidateQueries({ queryKey: ["sessions", sessionId] });
+      onSuccess?.();
     },
   });
 }

@@ -14,12 +14,12 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import type { ExecutionResult, ResultValue } from "../types/session.types";
 
-const RESULTS: ResultValue[] = ["NOT_RUN", "PASSED", "FAILED", "BLOCKED", "SKIPPED"];
+const RESULTS: ResultValue[] = ["NOT_RUN", "PASS", "FAIL", "BLOCKED", "SKIPPED"];
 
 const resultStyle: Record<ResultValue, string> = {
   NOT_RUN: "border-gray-300 text-gray-500",
-  PASSED: "border-green-500 text-green-600",
-  FAILED: "border-red-500 text-red-600",
+  PASS: "border-green-500 text-green-600",
+  FAIL: "border-red-500 text-red-600",
   BLOCKED: "border-orange-400 text-orange-600",
   SKIPPED: "border-yellow-400 text-yellow-600",
 };
@@ -35,8 +35,11 @@ interface Props {
 }
 
 export function ExecutionResultsTable({ sessionId, results }: Props) {
-  const { mutate: updateResult } = useUpdateResult(sessionId);
   const [editing, setEditing] = useState<Record<string, RowState>>({});
+
+  const { mutate: updateResult } = useUpdateResult(sessionId, () =>
+    setEditing({})
+  );
 
   const getRow = (r: ExecutionResult): RowState =>
     editing[r.id] ?? { result: r.result, comment: r.comment ?? "" };

@@ -1,5 +1,5 @@
 export type SessionStatus = "PLANNED" | "IN_PROGRESS" | "COMPLETED" | "ABORTED";
-export type ResultValue = "NOT_RUN" | "PASSED" | "FAILED" | "BLOCKED" | "SKIPPED";
+export type ResultValue = "NOT_RUN" | "PASS" | "FAIL" | "BLOCKED" | "SKIPPED";
 
 export interface RegressionSession {
   id: string;
