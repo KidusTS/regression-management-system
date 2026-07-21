@@ -138,7 +138,7 @@ public class ExcelImportService {
             for (int i = 1; i <= sheet.getLastRowNum(); i++) {
                 Row row = sheet.getRow(i);
                 if (row == null) continue;
-                rows.add(ExcelRowDto.builder()
+                ExcelRowDto dto = ExcelRowDto.builder()
                         .module(col(row, colIndex, "module"))
                         .feature(col(row, colIndex, "feature"))
                         .testIdRef(col(row, colIndex, "testIdRef"))
@@ -149,7 +149,11 @@ public class ExcelImportService {
                         .priority(col(row, colIndex, "priority"))
                         .automationStatus(col(row, colIndex, "automationStatus"))
                         .status(col(row, colIndex, "status"))
-                        .build());
+                        .build();
+                // Skip entirely blank rows (separators, section headers, etc.)
+                if (isBlank(dto.getTestIdRef()) && isBlank(dto.getTitle())
+                        && isBlank(dto.getTestSteps()) && isBlank(dto.getExpectedResult())) continue;
+                rows.add(dto);
             }
             return rows;
         } catch (IOException e) {
