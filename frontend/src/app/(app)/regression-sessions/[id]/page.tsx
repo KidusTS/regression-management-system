@@ -6,7 +6,7 @@ import {
   useSessionDetail,
   useSessionResults,
 } from "@/features/regression-sessions/hooks/useSession.queries";
-import { useUpdateSessionStatus } from "@/features/regression-sessions/hooks/useSession.mutations";
+import { useUpdateSessionStatus, useBulkUpdateResults } from "@/features/regression-sessions/hooks/useSession.mutations";
 import { SessionStatusBadge } from "@/features/regression-sessions/components/SessionStatusBadge";
 import { ExecutionResultsTable } from "@/features/regression-sessions/components/ExecutionResultsTable";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,12 @@ export default function SessionDetailPage() {
   const { data: session, isLoading } = useSessionDetail(id);
   const { data: results, isLoading: resultsLoading } = useSessionResults(id);
   const { mutate: updateStatus, isPending: statusPending } = useUpdateSessionStatus(id);
+  const { mutate: bulkUpdate, isPending: bulkPending } = useBulkUpdateResults(id);
+
+  const markAll = (result: "PASS" | "FAIL") => {
+    if (!results) return;
+    bulkUpdate({ results: results.map((r) => ({ resultId: r.id, result })) });
+  };
 
   if (isLoading) return <p className="text-muted-foreground text-sm">Loading...</p>;
   if (!session) return <p className="text-destructive text-sm">Session not found.</p>;
@@ -110,12 +116,36 @@ export default function SessionDetailPage() {
 
       {/* Results table */}
       <div className="space-y-3">
-        <h2 className="font-medium">
-          Execution Results
-          <span className="text-muted-foreground ml-2 text-sm font-normal">
-            {session.totalTests} tests
-          </span>
-        </h2>
+        <div className="flex items-center justify-between">
+          <h2 className="font-medium">
+            Execution Results
+            <span className="text-muted-foreground ml-2 text-sm font-normal">
+              {session.totalTests} tests
+            </span>
+          </h2>
+          <div className="flex items-center gap-4">
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                className="accent-green-500 h-4 w-4 cursor-pointer"
+                checked={results?.every((r) => r.result === "PASS") ?? false}
+                disabled={bulkPending || !results?.length}
+                onChange={(e) => e.target.checked && markAll("PASS")}
+              />
+              <span className="text-sm text-green-600">All Pass</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                className="accent-red-500 h-4 w-4 cursor-pointer"
+                checked={results?.every((r) => r.result === "FAIL") ?? false}
+                disabled={bulkPending || !results?.length}
+                onChange={(e) => e.target.checked && markAll("FAIL")}
+              />
+              <span className="text-sm text-destructive">All Fail</span>
+            </label>
+          </div>
+        </div>
         {resultsLoading && <p className="text-muted-foreground text-sm">Loading results...</p>}
         {results && results.length > 0 && (
           <ExecutionResultsTable sessionId={id} results={results} />
