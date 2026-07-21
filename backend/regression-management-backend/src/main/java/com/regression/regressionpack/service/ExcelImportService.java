@@ -30,16 +30,19 @@ public class ExcelImportService {
     private final RegressionTestRepository testRepository;
     private final RegressionTestVersionRepository testVersionRepository;
 
-    private static final int COL_MODULE           = 0;
-    private static final int COL_FEATURE          = 1;
-    private static final int COL_TEST_ID          = 2;
-    private static final int COL_TITLE            = 3;
-    private static final int COL_PRECONDITIONS    = 4;
-    private static final int COL_TEST_STEPS       = 5;
-    private static final int COL_EXPECTED_RESULT  = 6;
-    private static final int COL_PRIORITY         = 7;
-    private static final int COL_AUTOMATION       = 8;
-    private static final int COL_STATUS           = 9;
+    private static final Map<String, String> HEADER_ALIASES = Map.ofEntries(
+            Map.entry("module",            "module"),
+            Map.entry("feature",           "feature"),
+            Map.entry("test id",           "testIdRef"),
+            Map.entry("test title",        "title"),
+            Map.entry("title",             "title"),
+            Map.entry("preconditions",     "preconditions"),
+            Map.entry("test steps",        "testSteps"),
+            Map.entry("expected result",   "expectedResult"),
+            Map.entry("priority",          "priority"),
+            Map.entry("automation status", "automationStatus"),
+            Map.entry("status",            "status")
+    );
 
     @Transactional
     public ImportResultDto importExcel(RegressionPack pack, MultipartFile file, User importedBy) {
@@ -120,27 +123,44 @@ public class ExcelImportService {
                 throw new ImportException("Excel sheet is empty or contains only headers");
             }
 
+            // Build header index map from first row
+            Row headerRow = sheet.getRow(0);
+            Map<String, Integer> colIndex = new HashMap<>();
+            for (int i = 0; i < headerRow.getLastCellNum(); i++) {
+                Cell cell = headerRow.getCell(i);
+                if (cell == null) continue;
+                String raw = cell.getStringCellValue().trim().toLowerCase();
+                String field = HEADER_ALIASES.get(raw);
+                if (field != null) colIndex.put(field, i);
+            }
+
             List<ExcelRowDto> rows = new ArrayList<>();
             for (int i = 1; i <= sheet.getLastRowNum(); i++) {
                 Row row = sheet.getRow(i);
                 if (row == null) continue;
                 rows.add(ExcelRowDto.builder()
-                        .module(cellValue(row, COL_MODULE))
-                        .feature(cellValue(row, COL_FEATURE))
-                        .testIdRef(cellValue(row, COL_TEST_ID))
-                        .title(cellValue(row, COL_TITLE))
-                        .preconditions(cellValue(row, COL_PRECONDITIONS))
-                        .testSteps(cellValue(row, COL_TEST_STEPS))
-                        .expectedResult(cellValue(row, COL_EXPECTED_RESULT))
-                        .priority(cellValue(row, COL_PRIORITY))
-                        .automationStatus(cellValue(row, COL_AUTOMATION))
-                        .status(cellValue(row, COL_STATUS))
+                        .module(col(row, colIndex, "module"))
+                        .feature(col(row, colIndex, "feature"))
+                        .testIdRef(col(row, colIndex, "testIdRef"))
+                        .title(col(row, colIndex, "title"))
+                        .preconditions(col(row, colIndex, "preconditions"))
+                        .testSteps(col(row, colIndex, "testSteps"))
+                        .expectedResult(col(row, colIndex, "expectedResult"))
+                        .priority(col(row, colIndex, "priority"))
+                        .automationStatus(col(row, colIndex, "automationStatus"))
+                        .status(col(row, colIndex, "status"))
                         .build());
             }
             return rows;
         } catch (IOException e) {
             throw new ImportException("Failed to read Excel file: " + e.getMessage());
         }
+    }
+
+    private String col(Row row, Map<String, Integer> colIndex, String field) {
+        Integer idx = colIndex.get(field);
+        if (idx == null) return null;
+        return cellValue(row, idx);
     }
 
     private void validateRows(List<ExcelRowDto> rows) {
