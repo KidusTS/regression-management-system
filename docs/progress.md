@@ -1,6 +1,6 @@
 # Project Progress
 
-Last Updated: 2025
+Last Updated: 2026-07-21
 
 ---
 
@@ -156,6 +156,8 @@ Last Updated: 2025
 | Version list | ✅ | Inline on detail page |
 | Excel import modal | ✅ | |
 | Import result summary display | ✅ | Shown after successful import |
+| Create pack with optional Excel import | ✅ | Single form chains pack creation + import |
+| Excel export button | ✅ | Per version row, downloads `{packName}-v{n}.xlsx` |
 
 ### Regression Sessions Feature
 | Task | Status | Notes |
@@ -195,7 +197,7 @@ Last Updated: 2025
 
 | Integration | Status | Notes |
 |---|---|---|
-| Excel export | ⏳ | Export pack version back to `.xlsx` |
+| Excel export | ✅ | `GET /{id}/versions/{versionId}/export` — downloads `.xlsx` |
 | Jira integration | ⏳ | |
 | GitHub integration | ⏳ | |
 | Azure DevOps integration | ⏳ | |
@@ -210,7 +212,6 @@ Last Updated: 2025
 | Item | Priority | Notes |
 |---|---|---|
 | Audit log service not wired | Medium | `audit_logs` table exists but `AuditService` not implemented |
-| Excel export not implemented | Medium | Import works, export is pending |
 | Attachment storage uses local disk | Low | Should move to S3 or object storage for production |
 | Role-based endpoint authorization | Medium | `@PreAuthorize` not yet applied per endpoint |
 | Refresh token endpoint | Low | `/api/auth/refresh` designed but not implemented |

@@ -1,3 +1,64 @@
+## [0.8.0] — 2026-07-21 — Excel Export, UX Improvements & Lazy Loading Fixes
+
+### Summary
+Excel export implemented. Frontend UX improved across packs and sessions. Comprehensive lazy loading fixes applied across all backend services and repositories.
+
+### Added
+
+**Backend — Excel Export**
+- `ExcelExportService` — builds `.xlsx` workbook from a pack version's test data using Apache POI with bold headers and auto-sized columns
+- `GET /api/regression-packs/{id}/versions/{versionId}/export` — streams file with correct `Content-Disposition` and MIME type headers
+
+**Frontend — Excel Export**
+- `packService.exportVersion()` — fetches blob and triggers browser download
+- `useExportVersion` mutation hook
+- Export button added to each version row on pack detail page, named `{packName}-v{n}.xlsx`
+
+**Frontend — Create Pack with Import**
+- `useCreatePackWithImport` hook — chains pack creation and Excel import in a single mutation
+- `CreatePackModal` updated with optional `.xlsx` file picker — if file attached, creates pack and imports in one action, shows import result summary inline
+
+### Fixed
+
+**Backend — Lazy Loading (LazyInitializationException)**
+- Added `@Transactional(readOnly=true)` to all read methods across `RegressionPackService`, `RegressionTestService`, `RegressionSessionService`, `ReportService`, `AttachmentService`
+- Added JPQL `JOIN FETCH` queries to `RegressionPackVersionRepository` — eagerly loads `regressionPack`, `testVersions`, `regressionTest`
+- Added JPQL `JOIN FETCH` queries to `RegressionSessionRepository` — eagerly loads `packVersion`, `regressionPack`, `results`
+- Added `JOIN FETCH` query to `RegressionExecutionResultRepository` — eagerly loads `testVersion` and `regressionTest`
+- Fixed `MultipleBagFetchException` in session repository by removing `testVersions` collection fetch and replacing `getTestVersions().size()` with a dedicated `COUNT` query (`countTestsByVersionId`)
+- All services updated to use `findByIdWithDetails` fetch-join variants instead of plain `findById`
+
+**Backend — Excel Import**
+- Replaced fixed column index parsing with header-name-based parsing — column order in Excel no longer matters
+- Recognized headers: Module, Feature, Test ID, Test Title/Title, Preconditions, Test Steps, Expected Result, Priority, Automation Status, Status (all case-insensitive)
+- Fixed `Map.of()` exceeding 10-entry limit — replaced with `Map.ofEntries()`
+
+**Backend — Attachment & Session Services**
+- Fixed `AttachmentController` and `AttachmentService` manual instantiation (`= new`, `= null`) — now properly Spring-injected
+
+**Frontend — Dark Mode & Typography**
+- Enabled dark mode globally via `dark` class on `<html>`
+- Switched font from Geist to Inter (sans) and JetBrains Mono (mono)
+- Base font size set to 16px
+
+**Frontend — UX**
+- Pack name in packs table styled as primary-color link with explicit View button
+- Import modal renamed to "Import New Version" with next version number shown and explanation of what importing does
+- Native `<select>` elements in `CreateSessionModal` fixed for dark mode with `[color-scheme:dark]`
+- Import validation errors from 422 responses now displayed inline in the import modal
+
+### Affected Modules
+- `backend/regression-management-backend/src/main/java/com/regression/regressionpack/`
+- `backend/regression-management-backend/src/main/java/com/regression/regressiontest/`
+- `backend/regression-management-backend/src/main/java/com/regression/regressionsession/`
+- `backend/regression-management-backend/src/main/java/com/regression/report/`
+- `backend/regression-management-backend/src/main/java/com/regression/attachment/`
+- `frontend/src/features/regression-packs/`
+- `frontend/src/features/regression-sessions/`
+- `frontend/src/app/`
+
+---
+
 ## [0.7.0] — 2025 — Backend Integration Tests
 
 ### Summary
