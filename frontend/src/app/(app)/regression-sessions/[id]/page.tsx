@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
   useSessionDetail,
@@ -31,9 +32,14 @@ export default function SessionDetailPage() {
   if (!session) return <p className="text-destructive text-sm">Session not found.</p>;
 
   const transitions = STATUS_TRANSITIONS[session.status] ?? [];
+  const progressPct = session.totalTests > 0
+    ? Math.round(((session.totalTests - session.notRun) / session.totalTests) * 100)
+    : 0;
 
   return (
     <div className="space-y-8">
+      <Link href="/regression-sessions" className="text-muted-foreground hover:text-foreground text-sm">← Back to sessions</Link>
+
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="space-y-1">
@@ -70,6 +76,20 @@ export default function SessionDetailPage() {
             ))}
           </div>
         )}
+      </div>
+
+      {/* Progress bar */}
+      <div className="space-y-1">
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span>Progress</span>
+          <span>{progressPct}%</span>
+        </div>
+        <div className="bg-muted h-2 w-full rounded-full">
+          <div
+            className="bg-primary h-2 rounded-full transition-all"
+            style={{ width: `${progressPct}%` }}
+          />
+        </div>
       </div>
 
       {/* Tallies */}
