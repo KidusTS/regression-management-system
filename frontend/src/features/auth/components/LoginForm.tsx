@@ -21,7 +21,11 @@ export function LoginForm() {
     error instanceof Error ? error.message : error ? "Invalid email or password" : null;
 
   return (
-    <form onSubmit={handleSubmit((data) => login(data))} className="space-y-4">
+    <form onSubmit={handleSubmit((data) => {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      login(data);
+    })} className="space-y-4">
       <div className="space-y-1">
         <label className="text-sm font-medium">Email</label>
         <Input type="email" placeholder="you@example.com" {...register("email")} />
