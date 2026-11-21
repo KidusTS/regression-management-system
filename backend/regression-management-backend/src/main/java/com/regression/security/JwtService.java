@@ -3,6 +3,7 @@ package com.regression.security;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,14 @@ public class JwtService {
 
     @Value("${app.jwt.expiration-ms}")
     private long expirationMs;
+
+    /** Fail at startup (not on first login) if the secret is missing or too short for HS256. */
+    @PostConstruct
+    void validateSecret() {
+        if (secret == null || secret.getBytes(StandardCharsets.UTF_8).length < 32) {
+            throw new IllegalStateException("app.jwt.secret (JWT_SECRET) must be at least 32 bytes long");
+        }
+    }
 
     public String generateToken(UserDetails userDetails) {
         return Jwts.builder()

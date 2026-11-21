@@ -90,9 +90,10 @@ Set these in the Render dashboard under **Environment**:
 |---|---|
 | `DB_USERNAME` | Your Neon DB username |
 | `DB_PASSWORD` | Your Neon DB password |
-| `SPRING_DATASOURCE_URL` | `jdbc:postgresql://<host>.neon.tech/<dbname>?sslmode=require` |
+| `DB_URL` | `jdbc:postgresql://<host>.neon.tech/<dbname>?sslmode=require` |
 | `JWT_SECRET` | A random 64-char hex string (generate one below) |
-| `ALLOWED_ORIGIN` | `https://<your-app>.vercel.app` |
+| `ALLOWED_ORIGIN` | `https://<your-app>.vercel.app` (comma-separate several origins) |
+| `ADMIN_EMAIL` | *(optional)* the account that registers with this email becomes `ADMIN` |
 
 Generate a JWT secret:
 ```bash
@@ -101,18 +102,11 @@ openssl rand -hex 32
 
 ### CORS
 
-Before deploying, update your Spring Security config to allow requests from your Vercel domain. In `SecurityConfig.java`, update the CORS allowed origins to include:
-```
-https://<your-app>.vercel.app
-```
+Allowed browser origins come from the `ALLOWED_ORIGIN` environment variable (comma-separated, default `http://localhost:3000`). Set it to your Vercel URL; no code change needed.
 
-You can use an environment variable for this:
-```java
-@Value("${ALLOWED_ORIGIN:http://localhost:3000}")
-private String allowedOrigin;
-```
+### Required configuration
 
-Then reference `allowedOrigin` in your CORS configuration.
+The production jar runs **without** the `dev` profile, so `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` and `JWT_SECRET` (>= 32 bytes) must all be set or the app refuses to start. This is intentional: there are no insecure fallbacks.
 
 ### Free tier caveat
 
@@ -177,7 +171,7 @@ GET https://regression-management.vercel.app
 ```env
 DB_USERNAME=<neon-user>
 DB_PASSWORD=<neon-password>
-SPRING_DATASOURCE_URL=jdbc:postgresql://<host>.neon.tech/<dbname>?sslmode=require
+DB_URL=jdbc:postgresql://<host>.neon.tech/<dbname>?sslmode=require
 JWT_SECRET=<64-char-hex>
 ALLOWED_ORIGIN=https://<your-app>.vercel.app
 ```

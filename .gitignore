@@ -108,9 +108,8 @@ temp/
 # Package Locks
 ##############################
 
-# Keep ONE depending on your package manager
-
-package-lock.json
+# Lockfiles are COMMITTED so every machine / CI / Vercel build installs identical versions.
+# (Only ignore the ones for package managers you do not use.)
 # yarn.lock
 # pnpm-lock.yaml
 
