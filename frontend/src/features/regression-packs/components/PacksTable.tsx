@@ -8,10 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { cn } from "@/lib/utils";
+import { usePermissions } from "@/lib/permissions";
 import { useDeletePack } from "../hooks/usePack.mutations";
 import type { RegressionPack } from "../types/pack.types";
 
 export function PacksTable({ packs, onEdit }: { packs: RegressionPack[]; onEdit: (pack: RegressionPack) => void }) {
+  const { canWrite, canManage } = usePermissions();
   const { mutate: deletePack, isPending } = useDeletePack();
   const [toDelete, setToDelete] = useState<RegressionPack | null>(null);
 
@@ -43,12 +45,12 @@ export function PacksTable({ packs, onEdit }: { packs: RegressionPack[]; onEdit:
                 <TableCell className="text-muted-foreground text-sm">{new Date(pack.updatedAt).toLocaleDateString()}</TableCell>
                 <TableCell>
                   <div className="flex justify-end gap-1">
-                    <Button variant="ghost" size="icon" aria-label={`Edit ${pack.name}`} title="Edit" onClick={() => onEdit(pack)}>
+                    {canWrite && (<Button variant="ghost" size="icon" aria-label={`Edit ${pack.name}`} title="Edit" onClick={() => onEdit(pack)}>
                       <Pencil aria-hidden />
-                    </Button>
-                    <Button variant="ghost" size="icon" aria-label={`Delete ${pack.name}`} title="Delete" className="text-destructive hover:text-destructive" onClick={() => setToDelete(pack)}>
+                    </Button>)}
+                    {canManage && (<Button variant="ghost" size="icon" aria-label={`Delete ${pack.name}`} title="Delete" className="text-destructive hover:text-destructive" onClick={() => setToDelete(pack)}>
                       <Trash2 aria-hidden />
-                    </Button>
+                    </Button>)}
                   </div>
                 </TableCell>
               </TableRow>

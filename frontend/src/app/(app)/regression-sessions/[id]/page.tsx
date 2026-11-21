@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { RESULT_META, RESULT_ORDER } from "@/lib/status";
 import { cn } from "@/lib/utils";
 import type { ResultValue, SessionStatus } from "@/features/regression-sessions/types/session.types";
+import { usePermissions } from "@/lib/permissions";
 
 const TRANSITIONS: Record<SessionStatus, { label: string; next: SessionStatus; destructive?: boolean; confirm?: string }[]> = {
   PLANNED: [{ label: "Start session", next: "IN_PROGRESS" }],
@@ -32,6 +33,7 @@ const TRANSITIONS: Record<SessionStatus, { label: string; next: SessionStatus; d
 const COUNT_KEY = { PASS: "passed", FAIL: "failed", BLOCKED: "blocked", SKIPPED: "skipped", NOT_RUN: "notRun" } as const;
 
 export default function SessionDetailPage() {
+  const { canWrite } = usePermissions();
   const { id } = useParams<{ id: string }>();
   const { data: session, isLoading } = useSessionDetail(id);
   const { data: results, isLoading: resultsLoading } = useSessionResults(id);
@@ -73,7 +75,7 @@ export default function SessionDetailPage() {
             {session.environment && <span>{session.environment}</span>}
           </>
         }
-        actions={transitions.map((t) => (
+        actions={!canWrite ? undefined : transitions.map((t) => (
           <Button
             key={t.next}
             variant={t.destructive ? "destructive" : t.next === "COMPLETED" ? "outline" : "default"}
@@ -128,12 +130,12 @@ export default function SessionDetailPage() {
           </h2>
           <div className="flex flex-wrap items-center gap-2">
             <SearchInput value={query} onChange={setQuery} placeholder="Search tests…" className="w-full sm:w-60" />
-            <Button variant="outline" size="sm" disabled={bulkPending || !results?.length} onClick={() => setBulk("PASS")}>
+            {canWrite && <Button variant="outline" size="sm" disabled={bulkPending || !results?.length} onClick={() => setBulk("PASS")}>
               <CheckCheck aria-hidden /> Pass all
-            </Button>
-            <Button variant="outline" size="sm" disabled={bulkPending || !results?.length} onClick={() => setBulk("FAIL")}>
+            </Button>}
+            {canWrite && <Button variant="outline" size="sm" disabled={bulkPending || !results?.length} onClick={() => setBulk("FAIL")}>
               <XCircle aria-hidden /> Fail all
-            </Button>
+            </Button>}
           </div>
         </div>
 
@@ -146,7 +148,7 @@ export default function SessionDetailPage() {
             action={<Button variant="outline" onClick={() => { setFilter("ALL"); setQuery(""); }}>Clear filters</Button>}
           />
         )}
-        {visible.length > 0 && <ExecutionResultsTable sessionId={id} results={visible} />}
+        {visible.length > 0 && <ExecutionResultsTable sessionId={id} results={visible} readOnly={!canWrite} />}
       </section>
 
       <ConfirmDialog

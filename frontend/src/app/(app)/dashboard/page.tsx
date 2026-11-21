@@ -13,8 +13,10 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { TableSkeleton } from "@/components/shared/Skeleton";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/providers/AuthProvider";
+import { usePermissions } from "@/lib/permissions";
 
 export default function DashboardPage() {
+  const { canWrite } = usePermissions();
   const { user } = useAuth();
   const { data: sessions, isLoading: sessionsLoading } = useSessions();
   const { data: packs, isLoading: packsLoading } = usePacks();
@@ -38,7 +40,7 @@ export default function DashboardPage() {
       <PageHeader
         title={`${greeting}${user?.firstName ? `, ${user.firstName}` : ""}`}
         description="Here's where your regression testing stands."
-        actions={<Button onClick={() => setNewSession(true)}><Plus aria-hidden /> New session</Button>}
+        actions={canWrite ? (<Button onClick={() => setNewSession(true)}><Plus aria-hidden /> New session</Button>) : undefined}
       />
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">

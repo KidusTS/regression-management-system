@@ -7,6 +7,8 @@ import com.regression.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.access.prepost.PreAuthorize;
+import com.regression.security.Access;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,6 +21,7 @@ public class AttachmentController {
 
     private final AttachmentService attachmentService;
 
+    @PreAuthorize(Access.CAN_WRITE)
     @PostMapping("/api/results/{resultId}/attachments")
     public ResponseEntity<ApiResponse<AttachmentDto>> upload(
             @PathVariable UUID resultId,
@@ -32,6 +35,7 @@ public class AttachmentController {
         return ResponseEntity.ok(ApiResponse.ok(attachmentService.findByResult(resultId)));
     }
 
+    @PreAuthorize(Access.CAN_WRITE)
     @DeleteMapping("/api/attachments/{id}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable UUID id) {
         attachmentService.delete(id);

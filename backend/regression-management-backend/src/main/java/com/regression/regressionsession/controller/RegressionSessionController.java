@@ -8,6 +8,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.access.prepost.PreAuthorize;
+import com.regression.security.Access;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,6 +27,7 @@ public class RegressionSessionController {
         return ResponseEntity.ok(ApiResponse.ok(sessionService.findAll()));
     }
 
+    @PreAuthorize(Access.CAN_WRITE)
     @PostMapping
     public ResponseEntity<ApiResponse<RegressionSessionDto>> create(
             @Valid @RequestBody CreateSessionRequest request,
@@ -37,6 +40,7 @@ public class RegressionSessionController {
         return ResponseEntity.ok(ApiResponse.ok(sessionService.findById(id)));
     }
 
+    @PreAuthorize(Access.CAN_WRITE)
     @PutMapping("/{id}/status")
     public ResponseEntity<ApiResponse<RegressionSessionDto>> updateStatus(
             @PathVariable UUID id,
@@ -49,6 +53,7 @@ public class RegressionSessionController {
         return ResponseEntity.ok(ApiResponse.ok(sessionService.findResults(id)));
     }
 
+    @PreAuthorize(Access.CAN_WRITE)
     @PutMapping("/{id}/results/{resultId}")
     public ResponseEntity<ApiResponse<ExecutionResultDto>> updateResult(
             @PathVariable UUID id,
@@ -58,6 +63,7 @@ public class RegressionSessionController {
         return ResponseEntity.ok(ApiResponse.ok(sessionService.updateResult(id, resultId, request, user)));
     }
 
+    @PreAuthorize(Access.CAN_WRITE)
     @PutMapping("/{id}/results/bulk")
     public ResponseEntity<ApiResponse<List<ExecutionResultDto>>> bulkUpdateResults(
             @PathVariable UUID id,

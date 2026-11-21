@@ -12,6 +12,7 @@ import { TableSkeleton } from "@/components/shared/Skeleton";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { SessionStatus } from "@/features/regression-sessions/types/session.types";
+import { usePermissions } from "@/lib/permissions";
 
 const FILTERS: { value: SessionStatus | "ALL"; label: string }[] = [
   { value: "ALL", label: "All" },
@@ -22,6 +23,7 @@ const FILTERS: { value: SessionStatus | "ALL"; label: string }[] = [
 ];
 
 export default function SessionsPage() {
+  const { canWrite } = usePermissions();
   const { data: sessions, isLoading, error } = useSessions();
   const [modalOpen, setModalOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -49,11 +51,9 @@ export default function SessionsPage() {
       <PageHeader
         title="Regression sessions"
         description="Run a pack against a specific build and record the results."
-        actions={
-          <Button onClick={() => setModalOpen(true)}>
+        actions={canWrite ? (<Button onClick={() => setModalOpen(true)}>
             <Plus aria-hidden /> New session
-          </Button>
-        }
+          </Button>) : undefined}
       />
 
       {isLoading && <TableSkeleton />}
@@ -71,11 +71,9 @@ export default function SessionsPage() {
           icon={PlayCircle}
           title="No sessions yet"
           description="A session runs one version of a regression pack against a software build."
-          action={
-            <Button onClick={() => setModalOpen(true)}>
+          action={canWrite ? (<Button onClick={() => setModalOpen(true)}>
               <Plus aria-hidden /> New session
-            </Button>
-          }
+            </Button>) : undefined}
         />
       )}
 

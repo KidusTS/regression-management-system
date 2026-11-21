@@ -10,6 +10,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.access.prepost.PreAuthorize;
+import com.regression.security.Access;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -28,6 +30,7 @@ public class RegressionPackController {
         return ResponseEntity.ok(ApiResponse.ok(packService.findAll()));
     }
 
+    @PreAuthorize(Access.CAN_WRITE)
     @PostMapping
     public ResponseEntity<ApiResponse<RegressionPackDto>> create(
             @Valid @RequestBody CreateRegressionPackRequest request,
@@ -40,6 +43,7 @@ public class RegressionPackController {
         return ResponseEntity.ok(ApiResponse.ok(packService.findById(id)));
     }
 
+    @PreAuthorize(Access.CAN_WRITE)
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<RegressionPackDto>> update(
             @PathVariable UUID id,
@@ -47,6 +51,7 @@ public class RegressionPackController {
         return ResponseEntity.ok(ApiResponse.ok(packService.update(id, request)));
     }
 
+    @PreAuthorize(Access.CAN_MANAGE)
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable UUID id) {
         packService.softDelete(id);
@@ -74,6 +79,7 @@ public class RegressionPackController {
                 .body(bytes);
     }
 
+    @PreAuthorize(Access.CAN_WRITE)
     @PostMapping("/{id}/import")
     public ResponseEntity<ApiResponse<ImportResultDto>> importExcel(
             @PathVariable UUID id,

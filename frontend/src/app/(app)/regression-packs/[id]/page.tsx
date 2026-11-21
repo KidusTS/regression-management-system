@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import type { RegressionPackVersion } from "@/features/regression-packs/types/pack.types";
+import { usePermissions } from "@/lib/permissions";
 
 const CHANGE_TONE: Record<string, string> = {
   ADDED: "bg-success-soft text-success",
@@ -35,6 +36,7 @@ function Chip({ children, tone = "bg-neutral-soft text-neutral" }: { children: R
 }
 
 export default function PackDetailPage() {
+  const { canWrite } = usePermissions();
   const { id } = useParams<{ id: string }>();
   const { data: pack, isLoading: packLoading } = usePackDetail(id);
   const { data: versions, isLoading: versionsLoading } = usePackVersions(id);
@@ -68,7 +70,7 @@ export default function PackDetailPage() {
             {!pack.isActive && <Chip>Inactive</Chip>}
           </>
         }
-        actions={<Button onClick={() => setImportOpen(true)}><Upload aria-hidden /> Import new version</Button>}
+        actions={canWrite ? (<Button onClick={() => setImportOpen(true)}><Upload aria-hidden /> Import new version</Button>) : undefined}
       />
 
       <section className="space-y-3">
@@ -83,7 +85,7 @@ export default function PackDetailPage() {
             icon={FileSpreadsheet}
             title="No versions yet"
             description="Import an Excel file to create version 1 of this pack."
-            action={<Button onClick={() => setImportOpen(true)}><Upload aria-hidden /> Import Excel file</Button>}
+            action={canWrite ? (<Button onClick={() => setImportOpen(true)}><Upload aria-hidden /> Import Excel file</Button>) : undefined}
           />
         )}
         {sortedVersions.length > 0 && (

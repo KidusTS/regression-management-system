@@ -11,8 +11,10 @@ import { SearchInput } from "@/components/shared/SearchInput";
 import { TableSkeleton } from "@/components/shared/Skeleton";
 import { Button } from "@/components/ui/button";
 import type { RegressionPack } from "@/features/regression-packs/types/pack.types";
+import { usePermissions } from "@/lib/permissions";
 
 export default function RegressionPacksPage() {
+  const { canWrite } = usePermissions();
   const { data: packs, isLoading, error } = usePacks();
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<RegressionPack | null>(null);
@@ -39,11 +41,9 @@ export default function RegressionPacksPage() {
       <PageHeader
         title="Regression packs"
         description="A pack is a versioned set of test cases, usually imported from Excel."
-        actions={
-          <Button onClick={() => setModalOpen(true)}>
+        actions={canWrite ? (<Button onClick={() => setModalOpen(true)}>
             <Plus aria-hidden /> New pack
-          </Button>
-        }
+          </Button>) : undefined}
       />
 
       {isLoading && <TableSkeleton />}
@@ -61,11 +61,9 @@ export default function RegressionPacksPage() {
           icon={Layers}
           title="Create your first pack"
           description="Start from scratch, or attach an Excel file and we'll import the test cases for you."
-          action={
-            <Button onClick={() => setModalOpen(true)}>
+          action={canWrite ? (<Button onClick={() => setModalOpen(true)}>
               <Plus aria-hidden /> New pack
-            </Button>
-          }
+            </Button>) : undefined}
         />
       )}
 

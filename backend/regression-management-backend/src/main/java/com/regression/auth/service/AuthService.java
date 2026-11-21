@@ -10,6 +10,7 @@ import com.regression.user.entity.User;
 import com.regression.user.repository.RoleRepository;
 import com.regression.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -29,6 +30,10 @@ public class AuthService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
 
+    /** Optional: the account registering with this email is granted ADMIN (bootstraps the first admin). */
+    @Value("${app.admin-email:}")
+    private String adminEmail;
+
     public AuthResponse login(LoginRequest request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
@@ -43,8 +48,10 @@ public class AuthService {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new ImportException("Email already in use");
         }
-        Role defaultRole = roleRepository.findByName("QA_ENGINEER")
-                .orElseThrow(() -> new IllegalStateException("Default role not found"));
+        boolean isBootstrapAdmin = !adminEmail.isBlank() && adminEmail.equalsIgnoreCase(request.getEmail());
+        String roleName = isBootstrapAdmin ? "ADMIN" : "QA_ENGINEER";
+        Role defaultRole = roleRepository.findByName(roleName)
+                .orElseThrow(() -> new IllegalStateException("Role not found: " + roleName));
 
         User user = new User();
         user.setEmail(request.getEmail());
