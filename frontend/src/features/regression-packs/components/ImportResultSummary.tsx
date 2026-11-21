@@ -1,28 +1,24 @@
+import { cn } from "@/lib/utils";
 import type { ImportResult } from "../types/pack.types";
 
-interface Props {
-  result: ImportResult;
-}
-
-export function ImportResultSummary({ result }: Props) {
+export function ImportResultSummary({ result }: { result: ImportResult }) {
   const items = [
-    { label: "Added", value: result.added, color: "text-green-600" },
-    { label: "Modified", value: result.modified, color: "text-yellow-600" },
-    { label: "Unchanged", value: result.unchanged, color: "text-muted-foreground" },
-    { label: "Removed", value: result.removed, color: "text-destructive" },
-    { label: "Total", value: result.total, color: "text-foreground font-semibold" },
+    { label: "Added", value: result.added, tone: "bg-success-soft text-success" },
+    { label: "Modified", value: result.modified, tone: "bg-warning-soft text-warning" },
+    { label: "Unchanged", value: result.unchanged, tone: "bg-neutral-soft text-neutral" },
+    { label: "Removed", value: result.removed, tone: "bg-danger-soft text-danger" },
   ];
 
   return (
-    <div className="bg-muted/50 rounded-lg border p-4">
-      <p className="mb-3 text-sm font-medium">
-        Import complete — Version {result.versionNumber}
+    <div className="space-y-3">
+      <p className="text-sm">
+        Imported <span className="font-semibold">{result.total} tests</span> as version <span className="font-semibold">v{result.versionNumber}</span>.
       </p>
-      <div className="grid grid-cols-5 gap-2 text-center">
-        {items.map((item) => (
-          <div key={item.label}>
-            <p className={`text-lg font-semibold ${item.color}`}>{item.value}</p>
-            <p className="text-muted-foreground text-xs">{item.label}</p>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {items.map((i) => (
+          <div key={i.label} className={cn("rounded-lg p-3 text-center", i.tone)}>
+            <p className="text-xl font-semibold tabular-nums">{i.value}</p>
+            <p className="text-xs">{i.label}</p>
           </div>
         ))}
       </div>

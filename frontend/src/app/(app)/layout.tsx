@@ -3,24 +3,24 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/providers/AuthProvider";
-import { TopNav } from "@/components/layout/TopNav";
+import { Sidebar } from "@/components/layout/Sidebar";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isReady } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.replace("/login");
-    }
-  }, [isAuthenticated, router]);
+    if (isReady && !isAuthenticated) router.replace("/login");
+  }, [isReady, isAuthenticated, router]);
 
-  if (!isAuthenticated) return null;
+  if (!isReady || !isAuthenticated) return null;
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <TopNav />
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8">{children}</main>
+    <div className="min-h-screen">
+      <Sidebar />
+      <main className="animate-in-up mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:ml-64 lg:max-w-none lg:px-10 lg:py-10">
+        <div className="mx-auto max-w-6xl space-y-8">{children}</div>
+      </main>
     </div>
   );
 }

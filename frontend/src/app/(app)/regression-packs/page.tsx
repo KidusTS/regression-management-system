@@ -1,9 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { Layers, Plus } from "lucide-react";
 import { usePacks } from "@/features/regression-packs/hooks/usePacks";
 import { PacksTable } from "@/features/regression-packs/components/PacksTable";
 import { CreatePackModal } from "@/features/regression-packs/components/CreatePackModal";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { SearchInput } from "@/components/shared/SearchInput";
+import { TableSkeleton } from "@/components/shared/Skeleton";
 import { Button } from "@/components/ui/button";
 import type { RegressionPack } from "@/features/regression-packs/types/pack.types";
 
@@ -11,11 +16,18 @@ export default function RegressionPacksPage() {
   const { data: packs, isLoading, error } = usePacks();
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<RegressionPack | null>(null);
+  const [query, setQuery] = useState("");
 
-  const openEdit = (pack: RegressionPack) => {
-    setEditing(pack);
-    setModalOpen(true);
-  };
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return (packs ?? []).filter(
+      (p) =>
+        !q ||
+        [p.name, p.project, p.description].some((v) =>
+          v?.toLowerCase().includes(q),
+        ),
+    );
+  }, [packs, query]);
 
   const closeModal = () => {
     setModalOpen(false);
@@ -23,25 +35,69 @@ export default function RegressionPacksPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Regression Packs</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Manage your regression test packs and versions
-          </p>
-        </div>
-        <Button onClick={() => setModalOpen(true)}>New Pack</Button>
-      </div>
+    <>
+      <PageHeader
+        title="Regression packs"
+        description="A pack is a versioned set of test cases, usually imported from Excel."
+        actions={
+          <Button onClick={() => setModalOpen(true)}>
+            <Plus aria-hidden /> New pack
+          </Button>
+        }
+      />
 
-      {isLoading && <p className="text-muted-foreground text-sm">Loading...</p>}
-      {error && <p className="text-destructive text-sm">Failed to load packs.</p>}
-      {packs && packs.length === 0 && (
-        <p className="text-muted-foreground text-sm">No regression packs yet. Create one to get started.</p>
+      {isLoading && <TableSkeleton />}
+      {error && (
+        <p
+          role="alert"
+          className="bg-danger-soft text-danger rounded-lg px-4 py-3 text-sm"
+        >
+          Couldn&apos;t load regression packs. Please try again.
+        </p>
       )}
-      {packs && packs.length > 0 && <PacksTable packs={packs} onEdit={openEdit} />}
 
-      <CreatePackModal open={modalOpen} onClose={closeModal} editing={editing} />
-    </div>
+      {packs && packs.length === 0 && (
+        <EmptyState
+          icon={Layers}
+          title="Create your first pack"
+          description="Start from scratch, or attach an Excel file and we'll import the test cases for you."
+          action={
+            <Button onClick={() => setModalOpen(true)}>
+              <Plus aria-hidden /> New pack
+            </Button>
+          }
+        />
+      )}
+
+      {packs && packs.length > 0 && (
+        <div className="space-y-4">
+          <SearchInput
+            value={query}
+            onChange={setQuery}
+            placeholder="Search packs…"
+            className="sm:w-72"
+          />
+          {filtered.length === 0 ? (
+            <p className="text-muted-foreground bg-card rounded-xl border px-4 py-10 text-center text-sm">
+              No packs match &ldquo;{query}&rdquo;.
+            </p>
+          ) : (
+            <PacksTable
+              packs={filtered}
+              onEdit={(p) => {
+                setEditing(p);
+                setModalOpen(true);
+              }}
+            />
+          )}
+        </div>
+      )}
+
+      <CreatePackModal
+        open={modalOpen}
+        onClose={closeModal}
+        editing={editing}
+      />
+    </>
   );
 }

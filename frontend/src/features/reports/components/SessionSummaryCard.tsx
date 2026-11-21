@@ -1,64 +1,60 @@
+"use client";
+
+import Link from "next/link";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
+import { RESULT_META, RESULT_ORDER } from "@/lib/status";
+import { cn } from "@/lib/utils";
 import type { SessionSummary } from "../types/report.types";
 
-const SLICES = [
-  { key: "passed", label: "Passed", color: "#22c55e" },
-  { key: "failed", label: "Failed", color: "#ef4444" },
-  { key: "blocked", label: "Blocked", color: "#f97316" },
-  { key: "skipped", label: "Skipped", color: "#eab308" },
-  { key: "notRun", label: "Not Run", color: "#94a3b8" },
-] as const;
+const KEY = { PASS: "passed", FAIL: "failed", BLOCKED: "blocked", SKIPPED: "skipped", NOT_RUN: "notRun" } as const;
+// Chart fills mirror the status tokens (CSS variables work in SVG fill).
+const FILL = {
+  PASS: "var(--success)", FAIL: "var(--danger)", BLOCKED: "oklch(0.7 0.18 50)", SKIPPED: "var(--info)", NOT_RUN: "var(--border)",
+} as const;
 
-interface Props {
-  summary: SessionSummary;
-}
-
-export function SessionSummaryCard({ summary }: Props) {
-  const data = SLICES.map((s) => ({ name: s.label, value: summary[s.key], color: s.color })).filter(
-    (d) => d.value > 0
-  );
+export function SessionSummaryCard({ summary }: { summary: SessionSummary }) {
+  const data = RESULT_ORDER.map((r) => ({ name: RESULT_META[r].label, value: summary[KEY[r]], fill: FILL[r] })).filter((d) => d.value > 0);
 
   return (
-    <div className="rounded-xl border p-6 space-y-4">
-      <div>
-        <h2 className="font-semibold text-lg">{summary.sessionName}</h2>
-        <p className="text-muted-foreground text-sm">{summary.total} total tests</p>
+    <div className="bg-card space-y-5 rounded-xl border p-6 shadow-sm">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h3 className="text-lg font-semibold">{summary.sessionName}</h3>
+          <p className="text-muted-foreground text-sm">{summary.total} tests</p>
+        </div>
+        <Link href={`/regression-sessions/${summary.sessionId}`} className="text-primary text-sm font-medium hover:underline">Open session</Link>
       </div>
 
-      <div className="flex items-center gap-8">
-        <div className="relative h-36 w-36 shrink-0">
+      <div className="flex flex-col items-center gap-8 sm:flex-row">
+        <div className="relative size-44 shrink-0" role="img" aria-label={`Pass rate ${summary.passRate.toFixed(1)} percent`}>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <Pie
-                data={data}
-                cx="50%"
-                cy="50%"
-                innerRadius={42}
-                outerRadius={60}
-                dataKey="value"
-                strokeWidth={0}
-              >
-                {data.map((entry) => (
-                  <Cell key={entry.name} fill={entry.color} />
-                ))}
+              <Pie data={data} cx="50%" cy="50%" innerRadius={58} outerRadius={80} dataKey="value" strokeWidth={2} stroke="var(--card)">
+                {data.map((d) => <Cell key={d.name} fill={d.fill} />)}
               </Pie>
-              <Tooltip formatter={(v) => [Number(v), ""]} />
+              <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, background: "var(--popover)", border: "1px solid var(--border)", color: "var(--popover-foreground)" }} />
             </PieChart>
           </ResponsiveContainer>
-          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <span className="text-xl font-bold">{summary.passRate.toFixed(1)}%</span>
-            <span className="text-muted-foreground text-xs">Pass rate</span>
+          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+            <span className="text-3xl font-semibold tabular-nums">{summary.passRate.toFixed(1)}%</span>
+            <span className="text-muted-foreground text-xs">pass rate</span>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-x-8 gap-y-2">
-          {SLICES.map((s) => (
-            <div key={s.key} className="flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: s.color }} />
-              <span className="text-sm">{s.label}</span>
-              <span className="text-muted-foreground text-sm ml-auto">{summary[s.key]}</span>
-            </div>
-          ))}
+        <div className="grid w-full flex-1 grid-cols-2 gap-3 sm:grid-cols-3">
+          {RESULT_ORDER.map((r) => {
+            const meta = RESULT_META[r];
+            const Icon = meta.icon;
+            return (
+              <div key={r} className="flex items-center gap-3 rounded-lg border p-3">
+                <span className={cn("flex size-8 items-center justify-center rounded-md", meta.tone)}><Icon className="size-4" aria-hidden /></span>
+                <div>
+                  <p className="text-lg leading-none font-semibold tabular-nums">{summary[KEY[r]]}</p>
+                  <p className="text-muted-foreground text-xs">{meta.label}</p>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

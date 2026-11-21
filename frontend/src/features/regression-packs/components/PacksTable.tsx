@@ -1,81 +1,77 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { cn } from "@/lib/utils";
 import { useDeletePack } from "../hooks/usePack.mutations";
 import type { RegressionPack } from "../types/pack.types";
 
-interface Props {
-  packs: RegressionPack[];
-  onEdit: (pack: RegressionPack) => void;
-}
-
-export function PacksTable({ packs, onEdit }: Props) {
-  const { mutate: deletePack } = useDeletePack();
+export function PacksTable({ packs, onEdit }: { packs: RegressionPack[]; onEdit: (pack: RegressionPack) => void }) {
+  const { mutate: deletePack, isPending } = useDeletePack();
+  const [toDelete, setToDelete] = useState<RegressionPack | null>(null);
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Name</TableHead>
-          <TableHead>Project</TableHead>
-          <TableHead>Versions</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead className="text-right">Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {packs.map((pack) => (
-          <TableRow key={pack.id}>
-            <TableCell>
-              <Link href={`/regression-packs/${pack.id}`} className="font-medium underline-offset-4 hover:underline text-primary">
-                {pack.name}
-              </Link>
-              {pack.description && (
-                <p className="text-muted-foreground text-xs">{pack.description}</p>
-              )}
-            </TableCell>
-            <TableCell className="text-muted-foreground text-sm">{pack.project ?? "—"}</TableCell>
-            <TableCell>{pack.versionCount}</TableCell>
-            <TableCell>
-              <Badge variant={pack.isActive ? "default" : "secondary"}>
-                {pack.isActive ? "Active" : "Inactive"}
-              </Badge>
-            </TableCell>
-            <TableCell className="text-right">
-              <div className="flex justify-end gap-2">
-                <Link
-                  href={`/regression-packs/${pack.id}`}
-                  className="inline-flex h-7 items-center rounded-[min(var(--radius-md),12px)] border border-border bg-background px-2.5 text-[0.8rem] font-medium transition-colors hover:bg-muted"
-                >
-                  View
-                </Link>
-                <Button variant="outline" size="sm" onClick={() => onEdit(pack)}>
-                  Edit
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => {
-                    if (confirm(`Delete "${pack.name}"?`)) deletePack(pack.id);
-                  }}
-                >
-                  Delete
-                </Button>
-              </div>
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+    <>
+      <div className="bg-card overflow-hidden rounded-xl border shadow-sm">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Pack</TableHead>
+              <TableHead>Project</TableHead>
+              <TableHead>Versions</TableHead>
+              <TableHead>Updated</TableHead>
+              <TableHead className="text-right"><span className="sr-only">Actions</span></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {packs.map((pack) => (
+              <TableRow key={pack.id}>
+                <TableCell className="max-w-sm">
+                  <Link href={`/regression-packs/${pack.id}`} className="font-medium hover:underline">{pack.name}</Link>
+                  {!pack.isActive && (
+                    <span className={cn("bg-neutral-soft text-neutral ml-2 rounded-full px-2 py-0.5 text-xs")}>Inactive</span>
+                  )}
+                  {pack.description && <p className="text-muted-foreground truncate text-xs">{pack.description}</p>}
+                </TableCell>
+                <TableCell className="text-muted-foreground text-sm">{pack.project ?? "—"}</TableCell>
+                <TableCell className="tabular-nums">{pack.versionCount}</TableCell>
+                <TableCell className="text-muted-foreground text-sm">{new Date(pack.updatedAt).toLocaleDateString()}</TableCell>
+                <TableCell>
+                  <div className="flex justify-end gap-1">
+                    <Button variant="ghost" size="icon" aria-label={`Edit ${pack.name}`} title="Edit" onClick={() => onEdit(pack)}>
+                      <Pencil aria-hidden />
+                    </Button>
+                    <Button variant="ghost" size="icon" aria-label={`Delete ${pack.name}`} title="Delete" className="text-destructive hover:text-destructive" onClick={() => setToDelete(pack)}>
+                      <Trash2 aria-hidden />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      <ConfirmDialog
+        open={!!toDelete}
+        destructive
+        title={`Delete "${toDelete?.name}"?`}
+        description="This removes the pack and its versions. Sessions that used it may be affected. This can't be undone."
+        confirmLabel="Delete pack"
+        pending={isPending}
+        onCancel={() => setToDelete(null)}
+        onConfirm={() =>
+          toDelete && deletePack(toDelete.id, {
+            onSuccess: () => { toast.success("Pack deleted"); setToDelete(null); },
+            onError: () => toast.error("Couldn't delete the pack. It may still be used by a session."),
+          })
+        }
+      />
+    </>
   );
 }

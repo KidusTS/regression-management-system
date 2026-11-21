@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable react-hooks/set-state-in-effect -- intentional: hydrate from localStorage / reset form when dialog opens */
 
 import { createContext, useContext, useEffect, useState } from "react";
 import type { AuthResponse, CurrentUser } from "@/features/auth/types/auth.types";
@@ -6,6 +7,7 @@ import type { AuthResponse, CurrentUser } from "@/features/auth/types/auth.types
 interface AuthContextValue {
   user: CurrentUser | null;
   isAuthenticated: boolean;
+  isReady: boolean;
   login: (data: AuthResponse) => void;
   logout: () => void;
 }
@@ -14,6 +16,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<CurrentUser | null>(null);
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem("user");
@@ -24,6 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem("user");
       }
     }
+    setIsReady(true);
   }, []);
 
   const login = (data: AuthResponse) => {
@@ -46,7 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isReady, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
