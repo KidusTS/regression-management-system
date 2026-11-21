@@ -1,7 +1,7 @@
 package com.regression.regressionpack;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import com.regression.BaseIntegrationTest;
 import com.regression.util.AuthTestHelper;
 import com.regression.util.ExcelTestHelper;
@@ -11,6 +11,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
+import com.regression.user.entity.User;
+import com.regression.user.repository.RoleRepository;
+import com.regression.user.repository.UserRepository;
+import java.util.Set;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -23,13 +27,21 @@ class RegressionPackControllerTest extends BaseIntegrationTest {
     @Autowired
     ObjectMapper objectMapper;
 
+    @Autowired
+    UserRepository userRepository;
+
+    @Autowired
+    RoleRepository roleRepository;
+
     private String token;
+    private String email;
 
     @BeforeEach
     void setUp() throws Exception {
+        email = "pack_test_" + System.nanoTime() + "@example.com";
         token = AuthTestHelper.registerAndGetToken(
                 mockMvc,
-                "pack_test_" + System.nanoTime() + "@example.com",
+                email,
                 "password123"
         );
     }
@@ -122,6 +134,7 @@ class RegressionPackControllerTest extends BaseIntegrationTest {
 
     @Test
     void deletePack_existingPack_softDeletesIt() throws Exception {
+        promoteTestUserToLead();
         String packId = createPackAndGetId("Pack To Delete");
 
         mockMvc.perform(delete("/api/regression-packs/" + packId)
@@ -294,6 +307,13 @@ class RegressionPackControllerTest extends BaseIntegrationTest {
     }
 
     // ── Helper ────────────────────────────────────────────────────────────────
+
+    /** Deleting needs ADMIN or QA_LEAD; new users are QA_ENGINEER. Roles are read per request, so the token stays valid. */
+    private void promoteTestUserToLead() {
+        User user = userRepository.findByEmail(email).orElseThrow();
+        user.setRoles(Set.of(roleRepository.findByName("QA_LEAD").orElseThrow()));
+        userRepository.save(user);
+    }
 
     private String createPackAndGetId(String name) throws Exception {
         String response = mockMvc.perform(post("/api/regression-packs")
