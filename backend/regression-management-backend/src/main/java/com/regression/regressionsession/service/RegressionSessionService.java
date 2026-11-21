@@ -1,5 +1,6 @@
 package com.regression.regressionsession.service;
 
+import com.regression.common.exception.BadRequestException;
 import com.regression.common.exception.ResourceNotFoundException;
 import com.regression.regressionpack.entity.RegressionPackVersion;
 import com.regression.regressionpack.repository.RegressionPackVersionRepository;
@@ -17,7 +18,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -51,15 +55,16 @@ public class RegressionSessionService {
         session.setSoftwareVersion(request.getSoftwareVersion());
         session.setEnvironment(request.getEnvironment());
         session.setCreatedBy(createdBy);
-        sessionRepository.save(session);
 
-        // Pre-populate execution results for every test in the pack version
+        // Pre-populate execution results for every test in the pack version. They are added to the
+        // session so the saved entity (and the DTO built from it) already has them; cascade persists them.
         for (RegressionTestVersion tv : packVersion.getTestVersions()) {
             RegressionExecutionResult result = new RegressionExecutionResult();
             result.setSession(session);
             result.setTestVersion(tv);
-            resultRepository.save(result);
+            session.getResults().add(result);
         }
+        sessionRepository.save(session);
 
         return toDto(session);
     }
@@ -67,7 +72,7 @@ public class RegressionSessionService {
     @Transactional
     public RegressionSessionDto updateStatus(UUID id, UpdateSessionStatusRequest request) {
         RegressionSession session = getSessionOrThrow(id);
-        SessionStatus newStatus = SessionStatus.valueOf(request.getStatus().toUpperCase());
+        SessionStatus newStatus = parseEnum(SessionStatus.class, request.getStatus(), "status");
         session.setStatus(newStatus);
 
         if (newStatus == SessionStatus.IN_PROGRESS && session.getStartedAt() == null) {
@@ -82,9 +87,14 @@ public class RegressionSessionService {
 
     @Transactional(readOnly = true)
     public List<ExecutionResultDto> findResults(UUID sessionId) {
-        getSessionOrThrow(sessionId);
-        return resultRepository.findAllBySessionId(sessionId)
-                .stream().map(this::toResultDto).toList();
+        RegressionSession session = getSessionOrThrow(sessionId);
+        // Same order as the pack version (i.e. the Excel sheet).
+        Map<UUID, Integer> position = new HashMap<>();
+        List<RegressionTestVersion> ordered = session.getPackVersion().getTestVersions();
+        for (int i = 0; i < ordered.size(); i++) position.put(ordered.get(i).getId(), i);
+        return resultRepository.findAllBySessionId(sessionId).stream()
+                .sorted(Comparator.comparingInt(r -> position.getOrDefault(r.getTestVersion().getId(), Integer.MAX_VALUE)))
+                .map(this::toResultDto).toList();
     }
 
     @Transactional
@@ -93,7 +103,7 @@ public class RegressionSessionService {
                 .filter(r -> r.getSession().getId().equals(sessionId))
                 .orElseThrow(() -> new ResourceNotFoundException("Result not found"));
 
-        result.setResult(ExecutionResult.valueOf(request.getResult().toUpperCase()));
+        result.setResult(parseEnum(ExecutionResult.class, request.getResult(), "result"));
         result.setComment(request.getComment());
         result.setExecutedBy(user);
         result.setExecutedAt(LocalDateTime.now());
@@ -109,12 +119,20 @@ public class RegressionSessionService {
                     .filter(r -> r.getSession().getId().equals(sessionId))
                     .orElseThrow(() -> new ResourceNotFoundException("Result not found: " + entry.getResultId()));
 
-            result.setResult(ExecutionResult.valueOf(entry.getResult().toUpperCase()));
+            result.setResult(parseEnum(ExecutionResult.class, entry.getResult(), "result"));
             result.setComment(entry.getComment());
             result.setExecutedBy(user);
             result.setExecutedAt(LocalDateTime.now());
             return toResultDto(resultRepository.save(result));
         }).toList();
+    }
+
+    private static <E extends Enum<E>> E parseEnum(Class<E> type, String value, String field) {
+        try {
+            return Enum.valueOf(type, value.trim().toUpperCase());
+        } catch (IllegalArgumentException | NullPointerException e) {
+            throw new BadRequestException("Invalid " + field + ": " + value);
+        }
     }
 
     private RegressionSession getSessionOrThrow(UUID id) {
