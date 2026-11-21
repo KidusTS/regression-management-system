@@ -14,13 +14,28 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+/** True when the JWT's `exp` claim is in the past (or the token is unreadable). */
+function isTokenExpired(token: string | null): boolean {
+  if (!token) return true;
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+    return typeof payload.exp !== "number" || payload.exp * 1000 <= Date.now();
+  } catch {
+    return true;
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem("user");
-    if (stored) {
+    if (stored && isTokenExpired(localStorage.getItem("token"))) {
+      // Stale session from a previous visit: drop it so the guard sends us to /login.
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+    } else if (stored) {
       try {
         setUser(JSON.parse(stored));
       } catch {
