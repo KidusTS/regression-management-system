@@ -33,12 +33,17 @@ public class AttachmentService {
         RegressionExecutionResult result = resultRepository.findById(resultId)
                 .orElseThrow(() -> new ResourceNotFoundException("Execution result not found: " + resultId));
 
-        String storedName = UUID.randomUUID() + "_" + file.getOriginalFilename();
-        Path uploadPath = Paths.get(UPLOAD_DIR);
+        // Never use the client-supplied name on disk (path traversal). Keep only a safe extension.
+        String storedName = UUID.randomUUID() + safeExtension(file.getOriginalFilename());
+        Path uploadPath = Paths.get(UPLOAD_DIR).toAbsolutePath().normalize();
+        Path target = uploadPath.resolve(storedName).normalize();
+        if (!target.startsWith(uploadPath)) {
+            throw new IllegalArgumentException("Invalid file name");
+        }
 
         try {
             Files.createDirectories(uploadPath);
-            Files.copy(file.getInputStream(), uploadPath.resolve(storedName));
+            Files.copy(file.getInputStream(), target);
         } catch (IOException e) {
             throw new RuntimeException("Failed to store file: " + e.getMessage());
         }
@@ -46,7 +51,7 @@ public class AttachmentService {
         Attachment attachment = new Attachment();
         attachment.setExecutionResult(result);
         attachment.setFileName(file.getOriginalFilename());
-        attachment.setFilePath(uploadPath.resolve(storedName).toString());
+        attachment.setFilePath(target.toString());
         attachment.setFileSize(file.getSize());
         attachment.setMimeType(file.getContentType());
         attachment.setUploadedBy(uploadedBy);
@@ -70,12 +75,19 @@ public class AttachmentService {
         attachmentRepository.delete(attachment);
     }
 
+    private static String safeExtension(String originalName) {
+        if (originalName == null) return "";
+        int dot = originalName.lastIndexOf('.');
+        if (dot < 0) return "";
+        String ext = originalName.substring(dot).toLowerCase();
+        return ext.matches("\\.[a-z0-9]{1,10}") ? ext : "";
+    }
+
     private AttachmentDto toDto(Attachment a) {
         AttachmentDto dto = new AttachmentDto();
         dto.setId(a.getId());
         dto.setExecutionResultId(a.getExecutionResult().getId());
         dto.setFileName(a.getFileName());
-        dto.setFilePath(a.getFilePath());
         dto.setFileSize(a.getFileSize());
         dto.setMimeType(a.getMimeType());
         dto.setUploadedAt(a.getUploadedAt());

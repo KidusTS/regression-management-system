@@ -11,7 +11,6 @@ public class AttachmentDto {
     private UUID id;
     private UUID executionResultId;
     private String fileName;
-    private String filePath;
     private Long fileSize;
     private String mimeType;
     private LocalDateTime uploadedAt;
