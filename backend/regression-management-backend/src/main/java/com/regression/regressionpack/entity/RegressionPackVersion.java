@@ -50,7 +50,8 @@ public class RegressionPackVersion {
         joinColumns = @JoinColumn(name = "pack_version_id"),
         inverseJoinColumns = @JoinColumn(name = "test_version_id")
     )
-    @OrderBy("id ASC")
+    // Position in the list is persisted in pack_version_tests.display_order = Excel row order.
+    @OrderColumn(name = "display_order")
     private List<RegressionTestVersion> testVersions = new ArrayList<>();
 
     @Column(nullable = false, updatable = false)
