@@ -70,13 +70,19 @@ public class ExcelImportService {
             RegressionTestVersion existing = currentVersionMap.get(row.getTestIdRef());
 
             if (existing == null) {
-                // New test
+                // Not in the previous pack version. Either brand new, or a test that was removed
+                // earlier and is being re-added (its identity and old versions still exist).
                 RegressionTest test = testRepository
                         .findByRegressionPackIdAndTestIdRef(pack.getId(), row.getTestIdRef())
                         .orElseGet(() -> createTest(pack, row.getTestIdRef()));
-
-                RegressionTestVersion tv = createTestVersion(test, row, 1, ChangeType.ADDED);
-                newTestVersions.add(tv);
+                Optional<RegressionTestVersion> last =
+                        testVersionRepository.findTopByRegressionTestIdOrderByVersionNumberDesc(test.getId());
+                if (last.isPresent() && !hasChanged(last.get(), row)) {
+                    newTestVersions.add(last.get());          // identical to its last known content: reuse
+                } else {
+                    int nextNumber = last.map(v -> v.getVersionNumber() + 1).orElse(1);
+                    newTestVersions.add(createTestVersion(test, row, nextNumber, ChangeType.ADDED));
+                }
                 added++;
             } else if (hasChanged(existing, row)) {
                 // Modified test — create new version
